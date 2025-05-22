@@ -60,15 +60,19 @@ func (c *CAFController) create() http.HandlerFunc {
 			return
 		}
 
-		caf := domain.CAF{
-			Raw:               rawData,
-			CompanyID:         body.CAF.DA.RE,
-			CompanyName:       body.CAF.DA.RS,
-			DocumentType:      body.CAF.DA.TD,
-			InitialFolios:     body.CAF.DA.RNG.D,
-			FinalFolios:       body.CAF.DA.RNG.H,
-			AuthorizationDate: body.CAF.DA.FA.Time,
-			ExpirationDate:    body.CAF.DA.FA.Add(_sixMonths),
+		caf, err := domain.NewCAFBuilder().
+			WithRaw(rawData).
+			WithCompanyID(body.CAF.DA.RE).
+			WithCompanyName(body.CAF.DA.RS).
+			WithDocumentType(body.CAF.DA.TD).
+			WithInitialFolios(body.CAF.DA.RNG.D).
+			WithFinalFolios(body.CAF.DA.RNG.H).
+			WithAuthorizationDate(body.CAF.DA.FA.Time).
+			Build()
+		if err != nil {
+			slog.Error("failed to build CAF", slog.String("Error", err.Error()))
+			httpserver.ReplyWithError(w, http.StatusBadRequest, createCAFError)
+			return
 		}
 
 		c.service.Create(r.Context(), caf)

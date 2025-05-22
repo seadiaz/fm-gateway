@@ -17,18 +17,22 @@ import (
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug, ReplaceAttr: slogReplaceSource})))
-	slog.Info("🚀 zensor is initializing")
-
-	storage := storage.NewLocalStorage("tmp")
-	cafRepository := persistence.NewCAFRepository(storage)
-	cafService := usecases.NewCAFService(cafRepository)
-
-	stampService := usecases.NewStampService()
+	slog.Info("🚀 fm gateway is initializing")
 
 	dbhost := os.Getenv("FMG_DBHOST")
 	dbuser := os.Getenv("FMG_DBUSER")
 	dbpass := os.Getenv("FMG_DBPASS")
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=postgres port=5432 sslmode=disable", dbhost, dbuser, dbpass)
+
+	storage := storage.NewLocalStorage("tmp")
+	cafRepository, err := persistence.NewCAFRepository(dsn)
+	if err != nil {
+		panic(err)
+	}
+	cafService := usecases.NewCAFService(storage, cafRepository)
+
+	stampService := usecases.NewStampService()
+
 	companyRepository, err := persistence.NewCompanyRepository(dsn)
 	if err != nil {
 		panic(err)
