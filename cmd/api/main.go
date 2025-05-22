@@ -7,6 +7,7 @@ import (
 	"factura-movil-gateway/internal/persistence"
 	"factura-movil-gateway/internal/storage"
 	"factura-movil-gateway/internal/usecases"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -22,8 +23,22 @@ func main() {
 	cafRepository := persistence.NewCAFRepository(storage)
 	cafService := usecases.NewCAFService(cafRepository)
 
+	stampService := usecases.NewStampService()
+
+	dbhost := os.Getenv("FMG_DBHOST")
+	dbuser := os.Getenv("FMG_DBUSER")
+	dbpass := os.Getenv("FMG_DBPASS")
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=postgres port=5432 sslmode=disable", dbhost, dbuser, dbpass)
+	companyRepository, err := persistence.NewCompanyRepository(dsn)
+	if err != nil {
+		panic(err)
+	}
+	companyService := usecases.NewCompanyService(companyRepository)
+
 	httpServer := httpserver.NewServer(
 		controllers.NewCAFController(cafService),
+		controllers.NewStampController(stampService),
+		controllers.NewCompanyController(companyService),
 	)
 
 	_, cancelFn := context.WithCancel(context.Background())

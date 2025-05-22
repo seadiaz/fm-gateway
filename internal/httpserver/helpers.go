@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -49,4 +50,10 @@ func GetQueryParamMapKeyValue(r *http.Request, name string) (string, string) {
 	}
 
 	return kv[1], kv[2]
+}
+
+func ReplyXMLResponse(w http.ResponseWriter, statusCode int, output interface{}) {
+	w.Header().Add("Content-Type", "application/xml")
+	w.WriteHeader(statusCode)
+	xml.NewEncoder(w).Encode(output)
 }
