@@ -37,7 +37,7 @@ func main() {
 	}
 	companyService := usecases.NewCompanyService(companyRepository)
 
-	stampService := usecases.NewStampService()
+	stampService := usecases.NewStampService(cafService)
 
 	httpServer := httpserver.NewServer(
 		controllers.NewCAFController(cafService, companyService),

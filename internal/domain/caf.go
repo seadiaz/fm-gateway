@@ -10,6 +10,12 @@ const (
 	_sixMonths = time.Hour * 24 * 30 * 6
 )
 
+// CAF status constants
+const (
+	CAFStatusOpen   = "OPEN"
+	CAFStatusClosed = "CLOSED"
+)
+
 type CAF struct {
 	ID                string
 	Raw               []byte
@@ -22,6 +28,7 @@ type CAF struct {
 	FinalFolios       int64
 	AuthorizationDate time.Time
 	ExpirationDate    time.Time
+	Status            string
 }
 
 func NewCAFBuilder() *cafBuilder {
@@ -100,7 +107,8 @@ func (b *cafBuilder) WithAuthorizationDate(value time.Time) *cafBuilder {
 
 func (b *cafBuilder) Build() (CAF, error) {
 	result := CAF{
-		ID: uuid.NewString(),
+		ID:     uuid.NewString(),
+		Status: CAFStatusOpen, // CAFs start as open
 	}
 	for _, a := range b.actions {
 		if err := a(&result); err != nil {
@@ -112,4 +120,28 @@ func (b *cafBuilder) Build() (CAF, error) {
 	result.ExpirationDate = result.AuthorizationDate.Add(_sixMonths)
 
 	return result, nil
+}
+
+// UseNextFolio increments the current folio and returns the folio to use
+// Returns the folio number and whether the CAF should be closed after this use
+func (c *CAF) UseNextFolio() (int64, bool) {
+	folioToUse := c.CurrentFolios
+	shouldClose := c.CurrentFolios == c.FinalFolios
+	c.CurrentFolios++
+
+	if shouldClose {
+		c.Status = CAFStatusClosed
+	}
+
+	return folioToUse, shouldClose
+}
+
+// IsOpen returns true if the CAF is in open status
+func (c *CAF) IsOpen() bool {
+	return c.Status == CAFStatusOpen
+}
+
+// HasAvailableFolios returns true if there are folios available to use
+func (c *CAF) HasAvailableFolios() bool {
+	return c.IsOpen() && c.CurrentFolios <= c.FinalFolios
 }
