@@ -10,6 +10,7 @@ type CompanyService interface {
 	Save(ctx context.Context, company domain.Company) error
 	FindAll(ctx context.Context) ([]domain.Company, error)
 	FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error)
+	FindByID(ctx context.Context, id string) (*domain.Company, error)
 }
 
 func NewCompanyService(repository CompanyRepository) *SimpleCompanyService {
@@ -49,8 +50,18 @@ func (s *SimpleCompanyService) FindByNameFilter(ctx context.Context, nameFilter 
 	return companies, nil
 }
 
+func (s *SimpleCompanyService) FindByID(ctx context.Context, id string) (*domain.Company, error) {
+	company, err := s.reponsitory.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("finding company by id: %w", err)
+	}
+
+	return company, nil
+}
+
 type CompanyRepository interface {
 	Save(ctx context.Context, company domain.Company) error
 	FindAll(ctx context.Context) ([]domain.Company, error)
 	FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error)
+	FindByID(ctx context.Context, id string) (*domain.Company, error)
 }

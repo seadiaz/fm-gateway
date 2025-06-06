@@ -31,17 +31,17 @@ func main() {
 	}
 	cafService := usecases.NewCAFService(storage, cafRepository)
 
-	stampService := usecases.NewStampService()
-
 	companyRepository, err := persistence.NewCompanyRepository(dsn)
 	if err != nil {
 		panic(err)
 	}
 	companyService := usecases.NewCompanyService(companyRepository)
 
+	stampService := usecases.NewStampService()
+
 	httpServer := httpserver.NewServer(
 		controllers.NewCAFController(cafService),
-		controllers.NewStampController(stampService),
+		controllers.NewStampController(stampService, companyService),
 		controllers.NewCompanyController(companyService),
 	)
 

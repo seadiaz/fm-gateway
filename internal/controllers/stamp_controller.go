@@ -9,30 +9,47 @@ import (
 )
 
 const (
-	_createStampError = "failed to create stamp"
+	_createStampError     = "failed to create stamp"
+	_companyNotFoundError = "company not found"
 )
 
-func NewStampController(service usecases.StampService) *StampController {
+func NewStampController(stampService usecases.StampService, companyService usecases.CompanyService) *StampController {
 	return &StampController{
-		service: service,
+		stampService:   stampService,
+		companyService: companyService,
 	}
 }
 
 type StampController struct {
-	service usecases.StampService
+	stampService   usecases.StampService
+	companyService usecases.CompanyService
 }
 
 func (c *StampController) AddRoutes(mux *http.ServeMux) {
-	mux.Handle("POST /stamps", c.create())
+	mux.Handle("POST /companies/{companyId}/stamps", c.create())
 }
 
 func (c *StampController) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		companyId := r.PathValue("companyId")
+		if companyId == "" {
+			slog.Error("company id is required")
+			httpserver.ReplyWithError(w, http.StatusBadRequest, _companyNotFoundError)
+			return
+		}
+
+		company, err := c.companyService.FindByID(r.Context(), companyId)
+		if err != nil {
+			slog.Error("failed to find company", slog.String("Error", err.Error()), slog.String("companyId", companyId))
+			httpserver.ReplyWithError(w, http.StatusNotFound, _companyNotFoundError)
+			return
+		}
+
 		var req StampRequest
-		err := httpserver.DecodeJSONBody(r, &req)
+		err = httpserver.DecodeJSONBody(r, &req)
 		if err != nil {
 			slog.Error("failed to decode json", slog.String("Error", err.Error()))
-			http.Error(w, _createStampError, http.StatusBadRequest)
+			httpserver.ReplyWithError(w, http.StatusBadRequest, _createStampError)
 			return
 		}
 
@@ -46,7 +63,7 @@ func (c *StampController) create() http.HandlerFunc {
 			Build()
 		if err != nil {
 			slog.Error("failed building invoice", slog.String("Error", err.Error()))
-			http.Error(w, _createStampError, http.StatusBadRequest)
+			httpserver.ReplyWithError(w, http.StatusBadRequest, _createStampError)
 			return
 		}
 
@@ -63,10 +80,10 @@ func (c *StampController) create() http.HandlerFunc {
 
 		}
 
-		stamp, err := c.service.Generate(r.Context(), invoice)
+		stamp, err := c.stampService.Generate(r.Context(), *company, invoice)
 		if err != nil {
 			slog.Error("failed to generate stamp", slog.String("Error", err.Error()))
-			http.Error(w, _createStampError, http.StatusBadRequest)
+			httpserver.ReplyWithError(w, http.StatusInternalServerError, _createStampError)
 			return
 		}
 

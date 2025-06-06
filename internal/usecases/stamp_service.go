@@ -7,7 +7,7 @@ import (
 )
 
 type StampService interface {
-	Generate(ctx context.Context, invoice domain.Invoice) (domain.Stamp, error)
+	Generate(ctx context.Context, company domain.Company, invoice domain.Invoice) (domain.Stamp, error)
 }
 
 func NewStampService() *SimpleStampService {
@@ -17,10 +17,10 @@ func NewStampService() *SimpleStampService {
 type SimpleStampService struct {
 }
 
-func (s *SimpleStampService) Generate(ctx context.Context, invoice domain.Invoice) (domain.Stamp, error) {
+func (s *SimpleStampService) Generate(ctx context.Context, company domain.Company, invoice domain.Invoice) (domain.Stamp, error) {
 	result := domain.Stamp{
 		DD: domain.DD{
-			RE:    "12345678-9",
+			RE:    company.Code,
 			TD:    invoice.DocumentType,
 			F:     1,
 			FE:    invoice.CreationDate,

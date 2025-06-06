@@ -109,6 +109,35 @@ func (c *CompanyRepository) FindByNameFilter(ctx context.Context, nameFilter str
 	return companies, nil
 }
 
+func (c *CompanyRepository) FindByID(ctx context.Context, id string) (*domain.Company, error) {
+	if c.db == nil {
+		return nil, errors.New("database not initialized")
+	}
+
+	var companyData CompanyData
+	err := c.db.
+		WithContext(ctx).
+		Where("id = ?", id).
+		First(&companyData).
+		Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("company not found with id: %s", id)
+		}
+		return nil, fmt.Errorf("finding company by id: %w", err)
+	}
+
+	company := domain.Company{
+		ID:                    companyData.ID,
+		Name:                  companyData.Name,
+		Code:                  companyData.Code,
+		FacturaMovilCompanyID: companyData.FacturaMovilCompanyID,
+	}
+
+	return &company, nil
+}
+
 type CompanyData struct {
 	ID                    string `gorm:"primaryKey"`
 	Name                  string
