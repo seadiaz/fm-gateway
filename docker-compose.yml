@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: fm-gateway-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: fmgateway
+      POSTGRES_PASSWORD: fmgateway123 # pragma: allowlist secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fmgateway -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

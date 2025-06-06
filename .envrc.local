@@ -1,0 +1,7 @@
+# Local Development Environment Configuration
+# Use this file when working with the local Docker PostgreSQL instance
+# To use: source .envrc.local
+
+export FMG_DBHOST=localhost
+export FMG_DBUSER=fmgateway
+export FMG_DBPASS=fmgateway123 # pragma: allowlist secret

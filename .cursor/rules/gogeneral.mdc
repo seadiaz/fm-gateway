@@ -1,0 +1,18 @@
+---
+description: Enforce idiomatic Go code style and best practices
+globs: ["*.go"]
+alwaysApply: true
+---
+- Follow [Effective Go](https://golang.org/doc/effective_go.html) guidelines for code style and idioms.
+- Use `gofmt` for code formatting; all code must be gofmt-compliant.
+- Prefer short variable declarations (`:=`) where appropriate.
+- Use clear, concise naming. Exported names must be capitalized; unexported names should be short and meaningful.
+- Avoid unnecessary abstraction; keep code simple and readable.
+- Group related code into packages; avoid large monolithic files.
+- Document all exported functions, types, and packages with Go-style comments.
+
+- Use context (`context.Context`) as the first parameter for functions that may block, perform I/O, or require cancellation.
+- Prefer interfaces for dependencies to enable easier testing and mocking.
+- Avoid global variables except for constants or configuration.
+- Use struct embedding for code reuse, not inheritance.
+- All configuration should be loaded from environment variables or config files, never hardcoded.

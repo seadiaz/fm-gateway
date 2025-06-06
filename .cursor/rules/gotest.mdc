@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Write tests for all exported functions and critical logic.
+- Use Go's built-in `testing` package.
+- Name test functions as `TestXxx` and keep them small and focused.
+- Avoid test dependencies on external systems; use mocks or test servers.
+- Use table-driven tests for multiple cases.
+- Run `go test -race` to check for race conditions.

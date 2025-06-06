@@ -8,6 +8,8 @@ import (
 
 type CompanyService interface {
 	Save(ctx context.Context, company domain.Company) error
+	FindAll(ctx context.Context) ([]domain.Company, error)
+	FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error)
 }
 
 func NewCompanyService(repository CompanyRepository) *SimpleCompanyService {
@@ -29,6 +31,26 @@ func (s *SimpleCompanyService) Save(ctx context.Context, company domain.Company)
 	return nil
 }
 
+func (s *SimpleCompanyService) FindAll(ctx context.Context) ([]domain.Company, error) {
+	companies, err := s.reponsitory.FindAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("finding all companies: %w", err)
+	}
+
+	return companies, nil
+}
+
+func (s *SimpleCompanyService) FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error) {
+	companies, err := s.reponsitory.FindByNameFilter(ctx, nameFilter)
+	if err != nil {
+		return nil, fmt.Errorf("finding companies by name filter: %w", err)
+	}
+
+	return companies, nil
+}
+
 type CompanyRepository interface {
 	Save(ctx context.Context, company domain.Company) error
+	FindAll(ctx context.Context) ([]domain.Company, error)
+	FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error)
 }

@@ -10,6 +10,7 @@ import (
 
 const (
 	_createCompanyError = "failed to create company"
+	_listCompaniesError = "failed to list companies"
 )
 
 func NewCompanyController(service usecases.CompanyService) *CompanyController {
@@ -24,6 +25,7 @@ type CompanyController struct {
 
 func (c *CompanyController) AddRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /companies", c.create())
+	mux.Handle("GET /companies", c.list())
 }
 
 func (c *CompanyController) create() http.HandlerFunc {
@@ -61,9 +63,40 @@ func (c *CompanyController) create() http.HandlerFunc {
 			FacturaMovilCompanyID: company.FacturaMovilCompanyID,
 		}
 
-		c.service.Save(r.Context(), company)
-
 		httpserver.ReplyJSONResponse(w, http.StatusCreated, response)
+	}
+}
+
+func (c *CompanyController) list() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nameFilter := r.URL.Query().Get("name")
+
+		var companies []domain.Company
+		var err error
+
+		if nameFilter != "" {
+			companies, err = c.service.FindByNameFilter(r.Context(), nameFilter)
+		} else {
+			companies, err = c.service.FindAll(r.Context())
+		}
+
+		if err != nil {
+			slog.Error("failed to find companies", slog.String("Error", err.Error()), slog.String("nameFilter", nameFilter))
+			httpserver.ReplyWithError(w, http.StatusInternalServerError, _listCompaniesError)
+			return
+		}
+
+		response := make([]CompanyResponse, len(companies))
+		for i, company := range companies {
+			response[i] = CompanyResponse{
+				ID:                    company.ID,
+				Name:                  company.Name,
+				Code:                  company.Code,
+				FacturaMovilCompanyID: company.FacturaMovilCompanyID,
+			}
+		}
+
+		httpserver.ReplyJSONResponse(w, http.StatusOK, response)
 	}
 }
 

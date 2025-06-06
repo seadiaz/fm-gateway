@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Manage dependencies with Go modules (`go.mod` and `go.sum`).
+- Do not vendor dependencies unless required by project policy.
+- Keep dependencies up to date and remove unused ones.
+- Reference only stable, tagged releases in `go.mod`.

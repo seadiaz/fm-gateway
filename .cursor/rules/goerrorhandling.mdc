@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Always check and handle errors returned from functions.
+- Do not ignore errors by assigning them to `_` unless explicitly justified in a comment.
+- Return errors as the last return value.
+- Use `fmt.Errorf` with `%w` for error wrapping.
+- Prefer custom error types for domain-specific errors.
+- Never panic except in truly unrecoverable situations (e.g., program invariants).

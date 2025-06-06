@@ -52,6 +52,63 @@ func (c *CompanyRepository) Save(ctx context.Context, company domain.Company) er
 	return nil
 }
 
+func (c *CompanyRepository) FindAll(ctx context.Context) ([]domain.Company, error) {
+	if c.db == nil {
+		return nil, errors.New("database not initialized")
+	}
+
+	var companiesData []CompanyData
+	err := c.db.
+		WithContext(ctx).
+		Find(&companiesData).
+		Error
+
+	if err != nil {
+		return nil, fmt.Errorf("finding all companies: %w", err)
+	}
+
+	companies := make([]domain.Company, len(companiesData))
+	for i, data := range companiesData {
+		companies[i] = domain.Company{
+			ID:                    data.ID,
+			Name:                  data.Name,
+			Code:                  data.Code,
+			FacturaMovilCompanyID: data.FacturaMovilCompanyID,
+		}
+	}
+
+	return companies, nil
+}
+
+func (c *CompanyRepository) FindByNameFilter(ctx context.Context, nameFilter string) ([]domain.Company, error) {
+	if c.db == nil {
+		return nil, errors.New("database not initialized")
+	}
+
+	var companiesData []CompanyData
+	err := c.db.
+		WithContext(ctx).
+		Where("name ILIKE ?", "%"+nameFilter+"%").
+		Find(&companiesData).
+		Error
+
+	if err != nil {
+		return nil, fmt.Errorf("finding companies by name filter: %w", err)
+	}
+
+	companies := make([]domain.Company, len(companiesData))
+	for i, data := range companiesData {
+		companies[i] = domain.Company{
+			ID:                    data.ID,
+			Name:                  data.Name,
+			Code:                  data.Code,
+			FacturaMovilCompanyID: data.FacturaMovilCompanyID,
+		}
+	}
+
+	return companies, nil
+}
+
 type CompanyData struct {
 	ID                    string `gorm:"primaryKey"`
 	Name                  string
