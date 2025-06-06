@@ -16,23 +16,27 @@ import (
 )
 
 const (
-	createCAFError = "failed to create CAF"
+	createCAFError           = "failed to create CAF"
+	_cafCompanyNotFoundError = "company not found"
 
 	_sixMonths = time.Hour * 24 * 30 * 6
 )
 
-func NewCAFController(service usecases.CAFService) *CAFController {
+func NewCAFController(cafService usecases.CAFService, companyService usecases.CompanyService) *CAFController {
 	return &CAFController{
-		service: service,
+		cafService:     cafService,
+		companyService: companyService,
 	}
 }
 
 type CAFController struct {
-	service usecases.CAFService
+	cafService     usecases.CAFService
+	companyService usecases.CompanyService
 }
 
 func (c *CAFController) AddRoutes(mux *http.ServeMux) {
-	mux.Handle("POST /caf", c.create())
+	mux.Handle("POST /companies/{companyId}/cafs", c.create())
+	mux.Handle("GET /companies/{companyId}/cafs", c.list())
 }
 
 // decodeISO88591XML decodifica XML ISO-8859-1 a UTF-8.
@@ -44,11 +48,25 @@ func decodeISO88591XML(data []byte, v interface{}) error {
 
 func (c *CAFController) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		companyId := r.PathValue("companyId")
+		if companyId == "" {
+			slog.Error("company id is required")
+			httpserver.ReplyWithError(w, http.StatusBadRequest, _cafCompanyNotFoundError)
+			return
+		}
+
+		company, err := c.companyService.FindByID(r.Context(), companyId)
+		if err != nil {
+			slog.Error("failed to find company", slog.String("Error", err.Error()), slog.String("companyId", companyId))
+			httpserver.ReplyWithError(w, http.StatusNotFound, _cafCompanyNotFoundError)
+			return
+		}
+
 		var body cafXML
 		rawData, err := io.ReadAll(r.Body)
 		if err != nil {
 			slog.Error("failed to read request body", slog.String("Error", err.Error()))
-			http.Error(w, createCAFError, http.StatusBadRequest)
+			httpserver.ReplyWithError(w, http.StatusBadRequest, createCAFError)
 			return
 		}
 
@@ -56,13 +74,14 @@ func (c *CAFController) create() http.HandlerFunc {
 		err = decodeISO88591XML(rawData, &body)
 		if err != nil {
 			slog.Error("failed to decode xml", slog.String("Error", err.Error()))
-			http.Error(w, createCAFError, http.StatusBadRequest)
+			httpserver.ReplyWithError(w, http.StatusBadRequest, createCAFError)
 			return
 		}
 
 		caf, err := domain.NewCAFBuilder().
 			WithRaw(rawData).
-			WithCompanyID(body.CAF.DA.RE).
+			WithCompanyID(company.ID).
+			WithCompanyCode(body.CAF.DA.RE).
 			WithCompanyName(body.CAF.DA.RS).
 			WithDocumentType(body.CAF.DA.TD).
 			WithInitialFolios(body.CAF.DA.RNG.D).
@@ -75,9 +94,42 @@ func (c *CAFController) create() http.HandlerFunc {
 			return
 		}
 
-		c.service.Create(r.Context(), caf)
+		err = c.cafService.Create(r.Context(), *company, caf)
+		if err != nil {
+			slog.Error("failed to create CAF", slog.String("Error", err.Error()))
+			httpserver.ReplyWithError(w, http.StatusInternalServerError, createCAFError)
+			return
+		}
 
 		httpserver.ReplyJSONResponse(w, http.StatusCreated, caf)
+	}
+}
+
+func (c *CAFController) list() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		companyId := r.PathValue("companyId")
+		if companyId == "" {
+			slog.Error("company id is required")
+			httpserver.ReplyWithError(w, http.StatusBadRequest, _cafCompanyNotFoundError)
+			return
+		}
+
+		// Verificar que la compañía existe
+		_, err := c.companyService.FindByID(r.Context(), companyId)
+		if err != nil {
+			slog.Error("failed to find company", slog.String("Error", err.Error()), slog.String("companyId", companyId))
+			httpserver.ReplyWithError(w, http.StatusNotFound, _cafCompanyNotFoundError)
+			return
+		}
+
+		cafs, err := c.cafService.FindByCompanyID(r.Context(), companyId)
+		if err != nil {
+			slog.Error("failed to find cafs by company", slog.String("Error", err.Error()), slog.String("companyId", companyId))
+			httpserver.ReplyWithError(w, http.StatusInternalServerError, "failed to list cafs")
+			return
+		}
+
+		httpserver.ReplyJSONResponse(w, http.StatusOK, cafs)
 	}
 }
 

@@ -40,6 +40,7 @@ func (r *CAFRepository) Save(ctx context.Context, caf domain.CAF) error {
 		ID:                caf.ID,
 		Raw:               caf.Raw,
 		CompanyID:         caf.CompanyID,
+		CompanyCode:       caf.CompanyCode,
 		CompanyName:       caf.CompanyName,
 		DocumentType:      caf.DocumentType,
 		InitialFolios:     caf.InitialFolios,
@@ -60,6 +61,42 @@ func (r *CAFRepository) Save(ctx context.Context, caf domain.CAF) error {
 	return nil
 }
 
+func (r *CAFRepository) FindByCompanyID(ctx context.Context, companyID string) ([]domain.CAF, error) {
+	if r.db == nil {
+		return nil, errors.New("database not initialized")
+	}
+
+	var cafsData []CAFData
+	err := r.db.
+		WithContext(ctx).
+		Where("company_id = ?", companyID).
+		Find(&cafsData).
+		Error
+
+	if err != nil {
+		return nil, fmt.Errorf("finding cafs by company id: %w", err)
+	}
+
+	cafs := make([]domain.CAF, len(cafsData))
+	for i, data := range cafsData {
+		cafs[i] = domain.CAF{
+			ID:                data.ID,
+			Raw:               data.Raw,
+			CompanyID:         data.CompanyID,
+			CompanyCode:       data.CompanyCode,
+			CompanyName:       data.CompanyName,
+			DocumentType:      data.DocumentType,
+			InitialFolios:     data.InitialFolios,
+			CurrentFolios:     data.CurrentFolios,
+			FinalFolios:       data.FinalFolios,
+			AuthorizationDate: data.AuthorizationDate,
+			ExpirationDate:    data.ExpirationDate,
+		}
+	}
+
+	return cafs, nil
+}
+
 type BlobStorageClient interface {
 	Upload(ctx context.Context, blobName string, data io.Reader) error
 }
@@ -67,7 +104,8 @@ type BlobStorageClient interface {
 type CAFData struct {
 	ID                string `gorm:"primaryKey"`
 	Raw               []byte
-	CompanyID         string
+	CompanyID         string `gorm:"index"`
+	CompanyCode       string
 	CompanyName       string
 	DocumentType      uint
 	InitialFolios     int64

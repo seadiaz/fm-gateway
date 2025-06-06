@@ -40,7 +40,7 @@ func main() {
 	stampService := usecases.NewStampService()
 
 	httpServer := httpserver.NewServer(
-		controllers.NewCAFController(cafService),
+		controllers.NewCAFController(cafService, companyService),
 		controllers.NewStampController(stampService, companyService),
 		controllers.NewCompanyController(companyService),
 	)

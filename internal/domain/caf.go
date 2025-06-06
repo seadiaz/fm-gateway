@@ -14,6 +14,7 @@ type CAF struct {
 	ID                string
 	Raw               []byte
 	CompanyID         string
+	CompanyCode       string
 	CompanyName       string
 	DocumentType      uint
 	InitialFolios     int64
@@ -44,6 +45,14 @@ func (b *cafBuilder) WithRaw(value []byte) *cafBuilder {
 func (b *cafBuilder) WithCompanyID(value string) *cafBuilder {
 	b.actions = append(b.actions, func(d *CAF) error {
 		d.CompanyID = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithCompanyCode(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.CompanyCode = value
 		return nil
 	})
 	return b
