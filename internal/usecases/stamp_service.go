@@ -22,8 +22,8 @@ type SimpleStampService struct {
 }
 
 func (s *SimpleStampService) Generate(ctx context.Context, company domain.Company, invoice domain.Invoice) (domain.Stamp, error) {
-	// Get the next available folio from CAF
-	folio, err := s.cafService.UseCAFFolio(ctx, company.ID, uint(invoice.DocumentType))
+	// Get the next available folio and CAF from CAF service
+	folio, caf, err := s.cafService.UseCAFFolio(ctx, company.ID, uint(invoice.DocumentType))
 	if err != nil {
 		return domain.Stamp{}, fmt.Errorf("getting next folio from CAF: %w", err)
 	}
@@ -38,7 +38,7 @@ func (s *SimpleStampService) Generate(ctx context.Context, company domain.Compan
 			RSR:   invoice.Customer.Name,
 			MNT:   invoice.CalculateTotal(),
 			IT1:   invoice.Details[0].Product.Name,
-			CAF:   "FIXME",
+			CAF:   caf,
 			TSTED: time.Now().Format("2006-01-02T15:04:05-07:00"),
 		},
 	}

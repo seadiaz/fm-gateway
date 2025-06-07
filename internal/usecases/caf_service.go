@@ -24,7 +24,7 @@ type CAFRepository interface {
 type CAFService interface {
 	Create(ctx context.Context, company domain.Company, caf domain.CAF) error
 	FindByCompanyID(ctx context.Context, companyID string) ([]domain.CAF, error)
-	UseCAFFolio(ctx context.Context, companyID string, documentType uint) (int64, error)
+	UseCAFFolio(ctx context.Context, companyID string, documentType uint) (int64, domain.CAF, error)
 }
 
 func NewCAFService(storage BlobStorageClient, repository CAFRepository) *SimpleCAFService {
@@ -62,11 +62,11 @@ func (s *SimpleCAFService) FindByCompanyID(ctx context.Context, companyID string
 	return cafs, nil
 }
 
-func (s *SimpleCAFService) UseCAFFolio(ctx context.Context, companyID string, documentType uint) (int64, error) {
+func (s *SimpleCAFService) UseCAFFolio(ctx context.Context, companyID string, documentType uint) (int64, domain.CAF, error) {
 	// Find an available CAF for this company and document type
 	caf, err := s.repository.FindAvailableCAF(ctx, companyID, documentType)
 	if err != nil {
-		return 0, fmt.Errorf("finding available CAF: %w", err)
+		return 0, domain.CAF{}, fmt.Errorf("finding available CAF: %w", err)
 	}
 
 	// Use the next folio
@@ -75,7 +75,7 @@ func (s *SimpleCAFService) UseCAFFolio(ctx context.Context, companyID string, do
 	// Update the CAF in the database
 	err = s.repository.Update(ctx, *caf)
 	if err != nil {
-		return 0, fmt.Errorf("updating CAF after folio use: %w", err)
+		return 0, domain.CAF{}, fmt.Errorf("updating CAF after folio use: %w", err)
 	}
 
 	if shouldClose {
@@ -83,5 +83,5 @@ func (s *SimpleCAFService) UseCAFFolio(ctx context.Context, companyID string, do
 		fmt.Printf("CAF %s has been closed after using all folios (final folio: %d)\n", caf.ID, caf.FinalFolios)
 	}
 
-	return folioToUse, nil
+	return folioToUse, *caf, nil
 }

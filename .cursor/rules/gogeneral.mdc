@@ -10,6 +10,8 @@ alwaysApply: true
 - Avoid unnecessary abstraction; keep code simple and readable.
 - Group related code into packages; avoid large monolithic files.
 - Document all exported functions, types, and packages with Go-style comments.
+- Don't comment within function. Instead make the code expressive
+- All variable names, method names, function names, structure names and interface names must be in camel or pascal case.
 
 - Use context (`context.Context`) as the first parameter for functions that may block, perform I/O, or require cancellation.
 - Prefer interfaces for dependencies to enable easier testing and mocking.

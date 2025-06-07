@@ -126,8 +126,17 @@ tmp/
 - **Go Version**: 1.23.6 (current and stable)
 - **Dependencies**: All properly managed with go.mod
 - **Database**: PostgreSQL with GORM ORM
+- **Task Runner**: Just for standardized build/run commands
 - **Development Tools**: Clean architecture patterns implemented
 - **API Testing**: All endpoints ready for testing
+
+### Standard Development Commands
+- **Start Application**: `just run`
+- **Build for Production**: `just build`
+- **Run Tests**: `just test`
+- **Development Mode**: `just dev` (with live reload)
+
+**Important**: Always use `just` commands instead of direct `go` commands
 
 ## Current Focus Areas
 

@@ -87,6 +87,11 @@ func (c *CAFController) create() http.HandlerFunc {
 			WithInitialFolios(body.CAF.DA.RNG.D).
 			WithFinalFolios(body.CAF.DA.RNG.H).
 			WithAuthorizationDate(body.CAF.DA.FA.Time).
+			WithSignature(body.CAF.FRMA.Value).
+			WithRSAPK_M(body.CAF.DA.RSAPK.M).
+			WithRSAPK_E(body.CAF.DA.RSAPK.E).
+			WithIDK(body.CAF.DA.IDK).
+			WithPrivateKey(body.RSASK.Value).
 			Build()
 		if err != nil {
 			slog.Error("failed to build CAF", slog.String("Error", err.Error()))
@@ -145,7 +150,19 @@ type cafXML struct {
 				D int64 `xml:"D"`
 				H int64 `xml:"H"`
 			} `xml:"RNG"`
-			FA datatypes.Date `xml:"FA"`
+			FA    datatypes.Date `xml:"FA"`
+			RSAPK struct {
+				M string `xml:"M"`
+				E string `xml:"E"`
+			} `xml:"RSAPK"`
+			IDK string `xml:"IDK"`
 		} `xml:"DA"`
+		FRMA struct {
+			Algorithm string `xml:"algoritmo,attr"`
+			Value     string `xml:",chardata"`
+		} `xml:"FRMA"`
 	} `xml:"CAF"`
+	RSASK struct {
+		Value string `xml:",chardata"`
+	} `xml:"RSASK"`
 }

@@ -29,6 +29,11 @@ type CAF struct {
 	AuthorizationDate time.Time
 	ExpirationDate    time.Time
 	Status            string
+	Signature         string
+	RSAPK_M           string
+	RSAPK_E           string
+	IDK               string
+	PrivateKey        string
 }
 
 func NewCAFBuilder() *cafBuilder {
@@ -100,6 +105,46 @@ func (b *cafBuilder) WithFinalFolios(value int64) *cafBuilder {
 func (b *cafBuilder) WithAuthorizationDate(value time.Time) *cafBuilder {
 	b.actions = append(b.actions, func(d *CAF) error {
 		d.AuthorizationDate = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithSignature(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.Signature = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithRSAPK_M(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.RSAPK_M = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithRSAPK_E(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.RSAPK_E = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithIDK(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.IDK = value
+		return nil
+	})
+	return b
+}
+
+func (b *cafBuilder) WithPrivateKey(value string) *cafBuilder {
+	b.actions = append(b.actions, func(d *CAF) error {
+		d.PrivateKey = value
 		return nil
 	})
 	return b

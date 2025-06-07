@@ -49,6 +49,11 @@ func (r *CAFRepository) Save(ctx context.Context, caf domain.CAF) error {
 		AuthorizationDate: caf.AuthorizationDate,
 		ExpirationDate:    caf.ExpirationDate,
 		Status:            caf.Status,
+		Signature:         caf.Signature,
+		RSAPK_M:           caf.RSAPK_M,
+		RSAPK_E:           caf.RSAPK_E,
+		IDK:               caf.IDK,
+		PrivateKey:        caf.PrivateKey,
 	}
 	err := r.db.
 		WithContext(ctx).
@@ -80,6 +85,11 @@ func (r *CAFRepository) Update(ctx context.Context, caf domain.CAF) error {
 		AuthorizationDate: caf.AuthorizationDate,
 		ExpirationDate:    caf.ExpirationDate,
 		Status:            caf.Status,
+		Signature:         caf.Signature,
+		RSAPK_M:           caf.RSAPK_M,
+		RSAPK_E:           caf.RSAPK_E,
+		IDK:               caf.IDK,
+		PrivateKey:        caf.PrivateKey,
 	}
 
 	err := r.db.
@@ -126,6 +136,11 @@ func (r *CAFRepository) FindByCompanyID(ctx context.Context, companyID string) (
 			AuthorizationDate: data.AuthorizationDate,
 			ExpirationDate:    data.ExpirationDate,
 			Status:            data.Status,
+			Signature:         data.Signature,
+			RSAPK_M:           data.RSAPK_M,
+			RSAPK_E:           data.RSAPK_E,
+			IDK:               data.IDK,
+			PrivateKey:        data.PrivateKey,
 		}
 	}
 
@@ -141,8 +156,8 @@ func (r *CAFRepository) FindAvailableCAF(ctx context.Context, companyID string, 
 	err := r.db.
 		WithContext(ctx).
 		Where("company_id = ? AND document_type = ? AND status = ? AND current_folios <= final_folios",
-							companyID, documentType, domain.CAFStatusOpen).
-		Order("authorization_date ASC"). // Use oldest CAF first
+			companyID, documentType, domain.CAFStatusOpen).
+		Order("authorization_date ASC").
 		First(&cafData).
 		Error
 
@@ -166,6 +181,11 @@ func (r *CAFRepository) FindAvailableCAF(ctx context.Context, companyID string, 
 		AuthorizationDate: cafData.AuthorizationDate,
 		ExpirationDate:    cafData.ExpirationDate,
 		Status:            cafData.Status,
+		Signature:         cafData.Signature,
+		RSAPK_M:           cafData.RSAPK_M,
+		RSAPK_E:           cafData.RSAPK_E,
+		IDK:               cafData.IDK,
+		PrivateKey:        cafData.PrivateKey,
 	}
 
 	return &caf, nil
@@ -188,4 +208,9 @@ type CAFData struct {
 	AuthorizationDate time.Time
 	ExpirationDate    time.Time
 	Status            string `gorm:"index"`
+	Signature         string
+	RSAPK_M           string
+	RSAPK_E           string
+	IDK               string
+	PrivateKey        string
 }

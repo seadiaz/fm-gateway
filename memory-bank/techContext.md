@@ -54,6 +54,7 @@ Required environment variables:
 - **Schema Validation**: XSD files in `schemas/`
 
 ### Development Tools
+- **Just**: Task runner for build and run commands (`justfile`)
 - **Pre-commit Hooks**: `.pre-commit-config.yaml` for code quality
 - **Git Integration**: Standard Git workflow
 - **Environment Management**: `direnv` with `.envrc`
@@ -103,6 +104,19 @@ require (
 - **File System Security**: Isolated tmp directory
 - **TLS Support**: HTTPS endpoint capability
 - **Input Validation**: XML schema validation
+
+## Development Workflow
+
+### Build & Run Commands
+- **Run Application**: `just run` (equivalent to `go run ./cmd/api`)
+- **Build Application**: `just build` (creates binary at `bin/fm-gateway`)
+- **Run Tests**: `just test` (standard Go tests)
+- **Development Mode**: `just dev` (live reload with air)
+- **Code Formatting**: `just fmt` (go fmt)
+- **Linting**: `just lint` (golangci-lint)
+- **Dependencies**: `just deps` (go mod operations)
+
+**Note**: Always use `just` commands instead of direct `go` commands for consistency and workflow standardization.
 
 ## Deployment Architecture
 - **Single Binary**: Compiled Go application

@@ -14,6 +14,6 @@ type DD struct {
 	RSR   string
 	MNT   uint64
 	IT1   string
-	CAF   string
+	CAF   CAF
 	TSTED string
 }

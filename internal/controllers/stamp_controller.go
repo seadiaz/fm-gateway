@@ -90,15 +90,33 @@ func (c *StampController) create() http.HandlerFunc {
 		response := TED{
 			Version: "1.0",
 			DD: DD{
-				RE:    stamp.DD.RE,
-				TD:    stamp.DD.TD,
-				F:     stamp.DD.F,
-				FE:    stamp.DD.FE,
-				RR:    stamp.DD.RR,
-				RSR:   stamp.DD.RSR,
-				MNT:   stamp.DD.MNT,
-				IT1:   stamp.DD.IT1,
-				CAF:   stamp.DD.CAF,
+				RE:  stamp.DD.RE,
+				TD:  stamp.DD.TD,
+				F:   stamp.DD.F,
+				FE:  stamp.DD.FE,
+				RR:  stamp.DD.RR,
+				RSR: stamp.DD.RSR,
+				MNT: stamp.DD.MNT,
+				IT1: stamp.DD.IT1,
+				CAF: CAF{
+					Version: "1.0",
+					DA: DA{
+						RE:  stamp.DD.CAF.CompanyCode,
+						RS:  stamp.DD.CAF.CompanyName,
+						TD:  uint8(stamp.DD.CAF.DocumentType),
+						RNG: RNG{D: stamp.DD.CAF.InitialFolios, H: stamp.DD.CAF.FinalFolios},
+						FA:  stamp.DD.CAF.AuthorizationDate.Format("2006-01-02"),
+						RSAPK: RSAPK{
+							M: stamp.DD.CAF.RSAPK_M,
+							E: stamp.DD.CAF.RSAPK_E,
+						},
+						IDK: stamp.DD.CAF.IDK,
+					},
+					FRMA: FRMA{
+						Algorithm: "SHA1withRSA",
+						Value:     stamp.DD.CAF.Signature,
+					},
+				},
 				TSTED: stamp.DD.TSTED,
 			},
 			FRMT: stamp.FRMT,
@@ -108,7 +126,6 @@ func (c *StampController) create() http.HandlerFunc {
 	}
 }
 
-// Estructuras para el JSON recibido
 type StampRequest struct {
 	FmaPago       string     `json:"fmaPago"`
 	HasTaxes      bool       `json:"hasTaxes"`
@@ -165,6 +182,37 @@ type DD struct {
 	RSR   string `xml:"RSR"`
 	MNT   uint64 `xml:"MNT"`
 	IT1   string `xml:"IT1"`
-	CAF   string `xml:"CAF"`
+	CAF   CAF    `xml:"CAF"`
 	TSTED string `xml:"TSTED"`
+}
+
+type CAF struct {
+	Version string `xml:"version,attr"`
+	DA      DA     `xml:"DA"`
+	FRMA    FRMA   `xml:"FRMA"`
+}
+
+type DA struct {
+	RE    string `xml:"RE"`
+	RS    string `xml:"RS"`
+	TD    uint8  `xml:"TD"`
+	RNG   RNG    `xml:"RNG"`
+	FA    string `xml:"FA"`
+	RSAPK RSAPK  `xml:"RSAPK"`
+	IDK   string `xml:"IDK"`
+}
+
+type FRMA struct {
+	Algorithm string `xml:"algorithm,attr"`
+	Value     string `xml:",chardata"`
+}
+
+type RNG struct {
+	D int64 `xml:"D"`
+	H int64 `xml:"H"`
+}
+
+type RSAPK struct {
+	M string `xml:"M"`
+	E string `xml:"E"`
 }
