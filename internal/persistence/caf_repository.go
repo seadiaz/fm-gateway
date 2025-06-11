@@ -212,5 +212,5 @@ type CAFData struct {
 	RSAPK_M           string
 	RSAPK_E           string
 	IDK               string
-	PrivateKey        string
+	PrivateKey        string `gorm:"type:text"`
 }

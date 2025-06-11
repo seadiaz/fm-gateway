@@ -99,27 +99,30 @@ func (c *StampController) create() http.HandlerFunc {
 				MNT: stamp.DD.MNT,
 				IT1: stamp.DD.IT1,
 				CAF: CAF{
-					Version: "1.0",
+					Version: stamp.DD.CAF.Version,
 					DA: DA{
-						RE:  stamp.DD.CAF.CompanyCode,
-						RS:  stamp.DD.CAF.CompanyName,
-						TD:  uint8(stamp.DD.CAF.DocumentType),
-						RNG: RNG{D: stamp.DD.CAF.InitialFolios, H: stamp.DD.CAF.FinalFolios},
-						FA:  stamp.DD.CAF.AuthorizationDate.Format("2006-01-02"),
+						RE:  stamp.DD.CAF.DA.RE,
+						RS:  stamp.DD.CAF.DA.RS,
+						TD:  stamp.DD.CAF.DA.TD,
+						RNG: RNG{D: stamp.DD.CAF.DA.RNG.D, H: stamp.DD.CAF.DA.RNG.H},
+						FA:  stamp.DD.CAF.DA.FA,
 						RSAPK: RSAPK{
-							M: stamp.DD.CAF.RSAPK_M,
-							E: stamp.DD.CAF.RSAPK_E,
+							M: stamp.DD.CAF.DA.RSAPK.M,
+							E: stamp.DD.CAF.DA.RSAPK.E,
 						},
-						IDK: stamp.DD.CAF.IDK,
+						IDK: stamp.DD.CAF.DA.IDK,
 					},
 					FRMA: FRMA{
-						Algorithm: "SHA1withRSA",
-						Value:     stamp.DD.CAF.Signature,
+						Algorithm: stamp.DD.CAF.FRMA.Algorithm,
+						Value:     stamp.DD.CAF.FRMA.Value,
 					},
 				},
 				TSTED: stamp.DD.TSTED,
 			},
-			FRMT: stamp.FRMT,
+			FRMT: FRMT{
+				Algorithm: "SHA1withRSA",
+				Value:     stamp.FRMT,
+			},
 		}
 
 		httpserver.ReplyXMLResponse(w, http.StatusOK, response)
@@ -170,7 +173,7 @@ type Subsidiary struct {
 type TED struct {
 	Version string `xml:"version,attr"`
 	DD      DD     `xml:"DD"`
-	FRMT    string `xml:"FRMT"`
+	FRMT    FRMT   `xml:"FRMT"`
 }
 
 type DD struct {
@@ -184,6 +187,11 @@ type DD struct {
 	IT1   string `xml:"IT1"`
 	CAF   CAF    `xml:"CAF"`
 	TSTED string `xml:"TSTED"`
+}
+
+type FRMT struct {
+	Algorithm string `xml:"algorithm,attr"`
+	Value     string `xml:",chardata"`
 }
 
 type CAF struct {

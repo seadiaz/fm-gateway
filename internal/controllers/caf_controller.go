@@ -78,6 +78,14 @@ func (c *CAFController) create() http.HandlerFunc {
 			return
 		}
 
+		preview := body.RSASK.Value
+		if len(preview) > 100 {
+			preview = preview[:100]
+		}
+		slog.Debug("extracted private key from CAF",
+			slog.Int("keyLength", len(body.RSASK.Value)),
+			slog.String("keyPreview", preview))
+
 		caf, err := domain.NewCAFBuilder().
 			WithRaw(rawData).
 			WithCompanyID(company.ID).
