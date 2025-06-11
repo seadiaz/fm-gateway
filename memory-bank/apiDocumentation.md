@@ -294,8 +294,8 @@ Content-Type: application/json
 
 **Response:**
 - **Status:** `200 OK`
-- **Content-Type:** `application/xml`
-- **Body:**
+- **Content-Type:** `application/xml` (default), `image/png` (PDF417), or `application/json` (with barcode)
+- **Body (Default XML):**
 ```xml
 <TED version="1.0">
   <DD>
@@ -310,8 +310,50 @@ Content-Type: application/json
     <CAF>FIXME</CAF>
     <TSTED>2024-01-15T10:30:00-03:00</TSTED>
   </DD>
-  <FRMT></FRMT>
+  <FRMT algoritmo="SHA1withRSA">JKiGxvxmprOl+8ZixIYRJVL/2Og+CY3at7W...</FRMT>
 </TED>
+```
+
+**Query Parameters:**
+- `format=pdf417`: Returns a PDF417 barcode as PNG image (automatically sized)
+- `include_barcode=true`: Returns JSON with both TED XML and base64-encoded barcode
+
+**PDF417 Barcode Features:**
+- **Auto-Sizing**: Dimensions automatically calculated based on data size to prevent scaling errors
+- **Error Correction**: Level 2 security for document reliability
+- **Data Capacity**: Handles up to ~1,800 characters of TED XML data
+- **Image Format**: PNG with variable dimensions (typically 450x180 to 700x300 pixels)
+
+**Response with PDF417 Barcode (format=pdf417):**
+- **Content-Type:** `image/png`
+- **Body:** Binary PNG image data containing PDF417 barcode
+
+**Response with Barcode Included (include_barcode=true):**
+- **Content-Type:** `application/json`
+- **Body:**
+```json
+{
+  "ted": {
+    "version": "1.0",
+    "dd": {
+      "re": "12345678-9",
+      "td": 33,
+      "f": 1,
+      "fe": "2024-01-15",
+      "rr": "11111111-1",
+      "rsr": "Cliente Ejemplo",
+      "mnt": 20000,
+      "it1": "Producto Ejemplo",
+      "caf": { /* CAF structure */ },
+      "tsted": "2024-01-15T10:30:00-03:00"
+    },
+    "frmt": {
+      "algoritmo": "SHA1withRSA",
+      "value": "JKiGxvxmprOl+8ZixIYRJVL/2Og+CY3at7W..."
+    }
+  },
+  "barcode": "iVBORw0KGgoAAAANSUhEUgAAA..." // Base64-encoded PNG
+}
 ```
 
 **Field Descriptions:**
@@ -404,6 +446,30 @@ curl -X POST http://localhost:8080/companies/company-uuid/cafs \
 3. **Generate a Stamp:**
 ```bash
 curl -X POST http://localhost:8080/companies/company-uuid/stamps \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hasTaxes": true,
+    "client": {"code": "11111111-1", "name": "Cliente"},
+    "details": [{"position": 1, "product": {"name": "Producto", "price": 1000}, "quantity": 1}],
+    "date": "2024-01-15"
+  }'
+```
+
+3b. **Generate a Stamp with PDF417 Barcode:**
+```bash
+# Get PDF417 barcode as PNG image
+curl -X POST "http://localhost:8080/companies/company-uuid/stamps?format=pdf417" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hasTaxes": true,
+    "client": {"code": "11111111-1", "name": "Cliente"},
+    "details": [{"position": 1, "product": {"name": "Producto", "price": 1000}, "quantity": 1}],
+    "date": "2024-01-15"
+  }' \
+  --output stamp_barcode.png
+
+# Get JSON response with embedded barcode
+curl -X POST "http://localhost:8080/companies/company-uuid/stamps?include_barcode=true" \
   -H "Content-Type: application/json" \
   -d '{
     "hasTaxes": true,

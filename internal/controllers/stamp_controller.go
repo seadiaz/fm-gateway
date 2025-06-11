@@ -1,9 +1,12 @@
 package controllers
 
 import (
+	"encoding/base64"
+	"encoding/xml"
 	"factura-movil-gateway/internal/domain"
 	"factura-movil-gateway/internal/httpserver"
 	"factura-movil-gateway/internal/usecases"
+	"factura-movil-gateway/internal/utils"
 	"log/slog"
 	"net/http"
 )
@@ -77,7 +80,6 @@ func (c *StampController) create() http.HandlerFunc {
 				Quantity: d.Quantity,
 				Discount: d.Discount,
 			})
-
 		}
 
 		stamp, err := c.stampService.Generate(r.Context(), *company, invoice)
@@ -125,6 +127,42 @@ func (c *StampController) create() http.HandlerFunc {
 			},
 		}
 
+		// Check if PDF417 barcode is requested via query parameter
+		if r.URL.Query().Get("format") == "pdf417" || r.URL.Query().Get("include_barcode") == "true" {
+			// Convert to XML for PDF417 generation
+			xmlData, err := xml.Marshal(response)
+			if err != nil {
+				slog.Error("failed to marshal TED to XML for PDF417", slog.String("Error", err.Error()))
+				httpserver.ReplyWithError(w, http.StatusInternalServerError, _createStampError)
+				return
+			}
+
+			// Generate PDF417 barcode with automatically calculated safe dimensions
+			_, pngBytes, err := utils.GenerateStampPDF417FromXMLWithAutoDimensions(string(xmlData))
+			if err != nil {
+				slog.Error("failed to generate PDF417 barcode", slog.String("Error", err.Error()))
+				httpserver.ReplyWithError(w, http.StatusInternalServerError, _createStampError)
+				return
+			}
+
+			// If only PDF417 is requested, return the image
+			if r.URL.Query().Get("format") == "pdf417" {
+				w.Header().Set("Content-Type", "image/png")
+				w.WriteHeader(http.StatusOK)
+				w.Write(pngBytes)
+				return
+			}
+
+			// If include_barcode=true, return JSON with both XML and base64-encoded barcode
+			barcodeResponse := StampWithBarcodeResponse{
+				TED:     response,
+				Barcode: base64.StdEncoding.EncodeToString(pngBytes),
+			}
+			httpserver.ReplyJSONResponse(w, http.StatusOK, barcodeResponse)
+			return
+		}
+
+		// Default: return XML response
 		httpserver.ReplyXMLResponse(w, http.StatusOK, response)
 	}
 }
@@ -223,4 +261,10 @@ type RNG struct {
 type RSAPK struct {
 	M string `xml:"M"`
 	E string `xml:"E"`
+}
+
+// StampWithBarcodeResponse includes both the TED XML structure and the PDF417 barcode
+type StampWithBarcodeResponse struct {
+	TED     TED    `json:"ted"`
+	Barcode string `json:"barcode"` // Base64-encoded PNG image
 }
