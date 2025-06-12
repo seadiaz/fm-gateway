@@ -3,7 +3,7 @@ description: Enforce idiomatic Go code style and best practices
 globs: ["*.go"]
 alwaysApply: true
 ---
-- Follow [Effective Go](https://golang.org/doc/effective_go.html) guidelines for code style and idioms.
+- Follow [Effective Go](mdc:https:/golang.org/doc/effective_go.html) guidelines for code style and idioms.
 - Use `gofmt` for code formatting; all code must be gofmt-compliant.
 - Prefer short variable declarations (`:=`) where appropriate.
 - Use clear, concise naming. Exported names must be capitalized; unexported names should be short and meaningful.
@@ -12,6 +12,7 @@ alwaysApply: true
 - Document all exported functions, types, and packages with Go-style comments.
 - Don't comment within function. Instead make the code expressive
 - All variable names, method names, function names, structure names and interface names must be in camel or pascal case.
+- always use the global slog method and never inject a *slog.Logger instance
 
 - Use context (`context.Context`) as the first parameter for functions that may block, perform I/O, or require cancellation.
 - Prefer interfaces for dependencies to enable easier testing and mocking.

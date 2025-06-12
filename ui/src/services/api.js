@@ -195,7 +195,27 @@ export const cafService = {
     getCompanyCAFs: async (companyId) => {
         try {
             const response = await api.get(`/companies/${companyId}/cafs`);
-            return response.data;
+            console.log('Raw backend CAF response:', response.data);
+
+            // Transform backend data to match UI expectations
+            const transformedData = response.data.map(caf => {
+                console.log('Transforming CAF:', caf);
+                const transformed = {
+                    id: caf.ID,
+                    companyCode: caf.CompanyCode,
+                    documentType: caf.DocumentType,
+                    initialFolios: caf.InitialFolios,
+                    finalFolios: caf.FinalFolios,
+                    currentFolios: caf.CurrentFolios,
+                    authorizationDate: caf.AuthorizationDate,
+                    expirationDate: caf.ExpirationDate
+                };
+                console.log('Transformed CAF:', transformed);
+                return transformed;
+            });
+
+            console.log('Final transformed CAFs:', transformedData);
+            return transformedData;
         } catch (error) {
             console.warn('Using mock CAFs data');
             await delay(400);

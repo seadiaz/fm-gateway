@@ -8,8 +8,13 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('CAFList useEffect triggered:', { selectedCompany, refreshTrigger });
     if (selectedCompany) {
+      console.log('Loading CAFs for company:', selectedCompany);
       loadCAFs();
+    } else {
+      console.log('No company selected, clearing CAFs');
+      setCafs([]);
     }
   }, [selectedCompany, refreshTrigger]);
 
@@ -19,7 +24,10 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Calling cafService.getCompanyCAFs with company ID:', selectedCompany.id);
       const cafsData = await cafService.getCompanyCAFs(selectedCompany.id);
+      console.log('Loaded CAFs data:', cafsData);
+      console.log('CAFs data type:', typeof cafsData, 'Array?', Array.isArray(cafsData), 'Length:', cafsData?.length);
       setCafs(cafsData);
     } catch (err) {
       setError('Error al cargar los CAFs');
@@ -30,11 +38,18 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) {
+      return 'Fecha no disponible';
+    }
+    try {
+      return new Date(dateString).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
   };
 
   const getDocumentTypeName = (type) => {
@@ -51,12 +66,16 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
   };
 
   const getStatusColor = (expirationDate, currentFolios, finalFolios) => {
+    if (!expirationDate || currentFolios === undefined || finalFolios === undefined) {
+      return 'active'; // Default status if data is missing
+    }
+    
     const now = new Date();
     const expiry = new Date(expirationDate);
     const daysToExpiry = (expiry - now) / (1000 * 60 * 60 * 24);
     const foliosUsed = (currentFolios - 1); // Assuming initial is 1
     const totalFolios = finalFolios;
-    const usagePercentage = (foliosUsed / totalFolios) * 100;
+    const usagePercentage = totalFolios > 0 ? (foliosUsed / totalFolios) * 100 : 0;
 
     if (daysToExpiry < 0) return 'expired';
     if (daysToExpiry < 30 || usagePercentage > 90) return 'warning';
@@ -166,11 +185,16 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {cafs.map((caf) => {
+          {cafs.map((caf, index) => {
+            // Safety check for caf object
+            if (!caf || typeof caf !== 'object') {
+              return <div key={`invalid-caf-${index}`} style={{ display: 'none' }}></div>;
+            }
+            
             const status = getStatusColor(caf.expirationDate, caf.currentFolios, caf.finalFolios);
-            const foliosUsed = caf.currentFolios - caf.initialFolios;
-            const totalFolios = caf.finalFolios - caf.initialFolios + 1;
-            const usagePercentage = (foliosUsed / totalFolios) * 100;
+            const foliosUsed = (caf.currentFolios || 0) - (caf.initialFolios || 0);
+            const totalFolios = (caf.finalFolios || 0) - (caf.initialFolios || 0) + 1;
+            const usagePercentage = totalFolios > 0 ? (foliosUsed / totalFolios) * 100 : 0;
 
             return (
               <div 
@@ -209,10 +233,10 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
                           <span className="font-medium">Folios</span>
                         </div>
                         <p className="text-gray-900">
-                          {caf.initialFolios.toLocaleString()} - {caf.finalFolios.toLocaleString()}
+                          {(caf.initialFolios || 0).toLocaleString()} - {(caf.finalFolios || 0).toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500">
-                          Actual: {caf.currentFolios.toLocaleString()}
+                          Actual: {(caf.currentFolios || 0).toLocaleString()}
                         </p>
                       </div>
 
@@ -245,7 +269,7 @@ const CAFList = ({ selectedCompany, refreshTrigger }) => {
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          {foliosUsed.toLocaleString()} de {totalFolios.toLocaleString()} folios usados
+                          {(foliosUsed || 0).toLocaleString()} de {(totalFolios || 0).toLocaleString()} folios usados
                         </p>
                       </div>
                     </div>

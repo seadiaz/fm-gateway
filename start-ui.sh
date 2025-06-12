@@ -41,10 +41,10 @@ fi
 
 # Verificar si el backend está corriendo
 echo "🔍 Verificando conexión con el backend..."
-if curl -f -s http://localhost:8080/health > /dev/null 2>&1; then
-    echo "✅ Backend detectado en http://localhost:8080"
+if curl -f -s http://localhost:3000/healthz > /dev/null 2>&1; then
+    echo "✅ Backend detectado en http://localhost:3000"
 else
-    echo "⚠️  Backend no detectado en http://localhost:8080"
+    echo "⚠️  Backend no detectado en http://localhost:3000"
     echo "   Asegúrate de que el servidor Go esté corriendo"
     echo "   Puedes continuar, pero la UI no funcionará completamente sin el backend"
     read -p "¿Continuar de todas formas? (y/N): " -n 1 -r
@@ -56,7 +56,7 @@ fi
 
 echo ""
 echo "🎉 Iniciando servidor de desarrollo..."
-echo "   La aplicación estará disponible en: http://localhost:3000"
+echo "   La aplicación estará disponible en: http://localhost:3002"
 echo "   Presiona Ctrl+C para detener el servidor"
 echo ""
 

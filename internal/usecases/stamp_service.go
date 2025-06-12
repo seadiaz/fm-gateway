@@ -54,14 +54,29 @@ func (s *SimpleStampService) Generate(ctx context.Context, company domain.Compan
 
 	// Create DD structure
 	dd := domain.DD{
-		RE:    company.Code,
-		TD:    invoice.DocumentType,
-		F:     folio,
-		FE:    invoice.CreationDate,
-		RR:    invoice.Customer.Code,
-		RSR:   invoice.Customer.Name,
-		MNT:   invoice.CalculateTotal(),
-		IT1:   invoice.Details[0].Product.Name,
+		RE: company.Code,
+		TD: invoice.DocumentType,
+		F:  folio,
+		FE: invoice.IssueDate.Format("2006-01-02"),
+		RR: func() string {
+			if invoice.Receiver != nil {
+				return invoice.Receiver.Code
+			}
+			return ""
+		}(),
+		RSR: func() string {
+			if invoice.Receiver != nil {
+				return invoice.Receiver.Name
+			}
+			return ""
+		}(),
+		MNT: invoice.CalculateTotal(),
+		IT1: func() string {
+			if len(invoice.Details) > 0 {
+				return invoice.Details[0].Description
+			}
+			return "Producto"
+		}(),
 		CAF:   stampCAF,
 		TSTED: time.Now().Format("2006-01-02T15:04:05"),
 	}

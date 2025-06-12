@@ -3,6 +3,7 @@ module factura-movil-gateway
 go 1.23.6
 
 require (
+	github.com/boombuler/barcode v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.22.0
 	github.com/rs/cors v1.11.1
@@ -12,13 +13,13 @@ require (
 )
 
 require (
-	github.com/boombuler/barcode v1.0.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/jung-kurt/gofpdf/v2 v2.17.3 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 )

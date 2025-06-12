@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"factura-movil-gateway/internal/async"
 	"factura-movil-gateway/internal/controllers"
 	"factura-movil-gateway/internal/httpserver"
 	"factura-movil-gateway/internal/persistence"
@@ -12,7 +13,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -45,25 +48,88 @@ func main() {
 		controllers.NewCompanyController(companyService),
 	)
 
-	_, cancelFn := context.WithCancel(context.Background())
+	ctx, cancelFn := context.WithCancel(context.Background())
+
 	go httpServer.Run()
+
+	sourceDir := getEnvOrDefault("FMG_PROCESSOR_SOURCE_DIR", "./tmp/source")
+	inprogressDir := getEnvOrDefault("FMG_PROCESSOR_INPROGRESS_DIR", "./tmp/inprogress")
+	destinationDir := getEnvOrDefault("FMG_PROCESSOR_DESTINATION_DIR", "./tmp/destination")
+	errorDir := getEnvOrDefault("FMG_PROCESSOR_ERROR_DIR", "./tmp/errors")
+	intervalStr := getEnvOrDefault("FMG_PROCESSOR_INTERVAL", "15s")
+
+	var fileWorker *async.FileIntegrationWorker
+	if sourceDir == "" || inprogressDir == "" || destinationDir == "" || errorDir == "" {
+		panic("FMG_PROCESSOR_SOURCE_DIR, FMG_PROCESSOR_INPROGRESS_DIR, FMG_PROCESSOR_DESTINATION_DIR, and FMG_PROCESSOR_ERROR_DIR must be set")
+	}
+	// Parse interval
+	interval, err := time.ParseDuration(intervalStr)
+	if err != nil {
+		slog.Warn("Invalid processor interval, using default 30s",
+			"provided", intervalStr,
+			"error", err)
+		interval = 30 * time.Second
+	}
+
+	// Ensure directories exist
+	if err := ensureDirectoriesExist(sourceDir, inprogressDir, destinationDir, errorDir); err != nil {
+		slog.Error("Failed to create processor directories", "error", err)
+		os.Exit(1)
+	}
+
+	// Create file integration worker
+	fileWorker = async.NewFileIntegrationWorker(
+		interval,
+		sourceDir,
+		inprogressDir,
+		destinationDir,
+		errorDir,
+		stampService,
+		companyService,
+	)
+
+	var wg sync.WaitGroup
+	go fileWorker.Run(ctx, wg.Done)
+
+	slog.Info("✅ File integration worker started successfully")
 
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
+	slog.Info("🌟 FM Gateway started successfully!")
+
 	<-signalChannel
+	slog.Info("👋 Shutdown signal received, stopping services...")
+
+	// Cancel context to stop workers
 	cancelFn()
-	slog.Info("good bye!!!")
+
+	wg.Wait()
+
+	slog.Info("✅ All services stopped. Good bye!")
 	os.Exit(0)
 }
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func ensureDirectoriesExist(dirs ...string) error {
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+	return nil
+}
+
 func slogReplaceSource(groups []string, a slog.Attr) slog.Attr {
-	// Check if the attribute is the source key
 	if a.Key == slog.SourceKey {
 		source := a.Value.Any().(*slog.Source)
-		// Set the file attribute to only its base name
 		source.File = filepath.Base(source.File)
-		return slog.Any(a.Key, source)
 	}
-	return a // Return unchanged attribute for others
+	return a
 }

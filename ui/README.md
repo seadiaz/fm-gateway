@@ -11,13 +11,12 @@ UI en React para la gestión de archivos CAF (Código de Autorización de Folios
 - **Responsive**: Diseño adaptable para diferentes dispositivos
 - **Indicadores Visuales**: Estados de CAF (activo, por vencer, expirado)
 
-## 🚀 Inicio Rápido
+## 🇨🇱 Inicio Rápido
 
-### Prerrequisitos
+### Requisitos
 
-- Node.js 16+
-- npm o yarn
-- Backend API corriendo en `http://localhost:8080`
+- Node.js 16+ y npm
+- Backend API corriendo en `http://localhost:3000`
 
 ### Instalación
 
@@ -25,11 +24,11 @@ UI en React para la gestión de archivos CAF (Código de Autorización de Folios
 # Instalar dependencias
 npm install
 
-# Iniciar servidor de desarrollo
+# Iniciar en modo desarrollo
 npm start
 ```
 
-La aplicación estará disponible en `http://localhost:3000`
+La aplicación estará disponible en `http://localhost:3002`
 
 ### Scripts Disponibles
 
@@ -95,20 +94,19 @@ POST   /companies/{id}/cafs    # Cargar CAF
 
 ### Variables de Entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Puedes configurar la URL del backend usando variables de entorno:
 
-```env
-REACT_APP_API_URL=http://localhost:8080
+```bash
+# .env.local
+REACT_APP_API_URL=http://localhost:3000
 ```
 
-### Proxy de Desarrollo
+### Configuración del Proxy
 
-El proyecto incluye un proxy configurado para el desarrollo:
+El proyecto está configurado para hacer proxy de las peticiones API al backend:
 
 ```json
-{
-  "proxy": "http://localhost:8080"
-}
+"proxy": "http://localhost:3000"
 ```
 
 ## 🌟 Características Técnicas

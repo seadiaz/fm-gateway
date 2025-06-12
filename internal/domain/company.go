@@ -6,6 +6,7 @@ type Company struct {
 	ID                    string
 	Code                  string
 	Name                  string
+	Address               string
 	FacturaMovilCompanyID uint64
 }
 
@@ -30,6 +31,14 @@ func (b *companyBuilder) WithCode(value string) *companyBuilder {
 func (b *companyBuilder) WithName(value string) *companyBuilder {
 	b.actions = append(b.actions, func(d *Company) error {
 		d.Name = value
+		return nil
+	})
+	return b
+}
+
+func (b *companyBuilder) WithAddress(value string) *companyBuilder {
+	b.actions = append(b.actions, func(d *Company) error {
+		d.Address = value
 		return nil
 	})
 	return b
