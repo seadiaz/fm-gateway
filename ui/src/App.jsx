@@ -4,6 +4,7 @@ import CompanySelector from './components/CompanySelector';
 import CAFUploader from './components/CAFUploader';
 import CAFList from './components/CAFList';
 import CreateCompanyModal from './components/CreateCompanyModal';
+import CommercialActivitiesManager from './components/CommercialActivitiesManager';
 
 function App() {
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -25,6 +26,11 @@ function App() {
   };
 
   const handleUploadSuccess = () => {
+    // Trigger refresh of CAF list
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCAFUploadSuccess = () => {
     // Trigger refresh of CAF list
     setRefreshTrigger(prev => prev + 1);
   };
@@ -83,11 +89,42 @@ function App() {
               onCreateCompany={handleCreateCompany}
             />
 
-            {/* CAF Uploader */}
-            <CAFUploader
-              selectedCompany={selectedCompany}
-              onUploadSuccess={handleUploadSuccess}
-            />
+            {/* Company Details */}
+            {selectedCompany && (
+                <div className="space-y-6">
+                    <div className="bg-white shadow rounded-lg p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Detalles de la Empresa</h2>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Nombre</p>
+                                <p className="mt-1 text-sm text-gray-900">{selectedCompany.name}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">RUT</p>
+                                <p className="mt-1 text-sm text-gray-900">{selectedCompany.code}</p>
+                            </div>
+                            {selectedCompany.factura_movil_company_id && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500">ID Factura Móvil</p>
+                                    <p className="mt-1 text-sm text-gray-900">{selectedCompany.factura_movil_company_id}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Commercial Activities Manager */}
+                    <CommercialActivitiesManager
+                        selectedCompany={selectedCompany}
+                        refreshTrigger={refreshTrigger}
+                    />
+
+                    {/* CAF Uploader */}
+                    <CAFUploader
+                        selectedCompany={selectedCompany}
+                        onUploadSuccess={handleCAFUploadSuccess}
+                    />
+                </div>
+            )}
           </div>
 
           {/* Right Column */}

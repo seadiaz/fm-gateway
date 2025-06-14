@@ -16,6 +16,8 @@ import (
 	"factura-movil-gateway/internal/utils"
 
 	"github.com/jung-kurt/gofpdf/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // DocumentService defines the interface for document processing operations
@@ -160,6 +162,18 @@ func (s *SimpleDocumentService) createPDF417(stampXML []byte) ([]byte, error) {
 
 // createThermalPDF creates a thermal printer optimized PDF document
 func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampXML []byte) ([]byte, error) {
+	// Get company
+	company, err := s.companyService.FindByCode(context.Background(), invoice.Issuer.Code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find company with code %s: %w", invoice.Issuer.Code, err)
+	}
+
+	// Get commercial activities
+	activities, err := s.companyService.GetCommercialActivities(context.Background(), company.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commercial activities for company %s: %w", company.ID, err)
+	}
+
 	// Create PDF with custom page size for 3-inch thermal printer (80mm width)
 	pdf := gofpdf.NewCustom(&gofpdf.InitType{
 		UnitStr: "mm",
@@ -231,14 +245,44 @@ func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampX
 
 	// Company Header Section
 	pdf.SetFont("Arial", "B", 10)
-	pdf.CellFormat(0, 5, encodeText(invoice.Issuer.Name), "", 1, "C", false, 0, "")
+	// Get page width for centering
+	pageWidth, _ := pdf.GetPageSize()
+	// Calculate cell width (full width minus margins)
+	cellWidth := pageWidth - 6 // 3mm margin on each side
+	pdf.CellFormat(pageWidth, 5, encodeText(company.Name), "", 1, "C", false, 0, "")
 
 	pdf.SetFont("Arial", "", 8)
-	pdf.CellFormat(0, 4, fmt.Sprintf("RUT: %s", invoice.Issuer.Code), "", 1, "C", false, 0, "")
+	pdf.CellFormat(cellWidth, 4, fmt.Sprintf("RUT: %s", company.Code), "", 1, "C", false, 0, "")
 
-	if invoice.Issuer.Address != "" {
+	pdf.CellFormat(0, 3, strings.Repeat("=", separatorWidth), "", 1, "C", false, 0, "")
+
+	// Document type and number
+	pdf.SetFont("Arial", "", 8)
+	docTypeName := getDocumentTypeName(invoice.DocumentType)
+	docTypeName = cases.Title(language.Spanish).String(strings.ToLower(docTypeName))
+	docTypeName = strings.Replace(docTypeName, "Electronico", "Electrónico", -1)
+	docTypeName = strings.Replace(docTypeName, "Electronica", "Electrónica", -1)
+	docTypeName = strings.Replace(docTypeName, "Sii", "SII", -1)
+	pdf.CellFormat(0, 4, fmt.Sprintf("%s N°: %d", docTypeName, invoice.Folio), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 4, fmt.Sprintf("Fecha: %s", invoice.IssueDate.Format("02/01/2006")), "", 1, "L", false, 0, "")
+
+	// Commercial activities
+	if len(activities) > 0 {
+		for _, activity := range activities {
+			pdf.CellFormat(0, 4, activity.Description, "", 1, "L", false, 0, "")
+		}
+		pdf.Ln(2)
+	}
+
+	// Separator line
+	pdf.Line(0, pdf.GetY(), 200, pdf.GetY())
+	pdf.Ln(5)
+
+	pdf.SetFont("Arial", "", 8)
+
+	if company.Address != "" {
 		// Split long addresses
-		address := encodeText(invoice.Issuer.Address)
+		address := encodeText(company.Address)
 		if len(address) > 35 {
 			words := strings.Fields(address)
 			var line1, line2 string
@@ -254,35 +298,21 @@ func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampX
 					break
 				}
 			}
-			pdf.CellFormat(0, 4, line1, "", 1, "C", false, 0, "")
+			pdf.CellFormat(cellWidth, 4, line1, "", 1, "C", false, 0, "")
 			if line2 != "" {
-				pdf.CellFormat(0, 4, line2, "", 1, "C", false, 0, "")
+				pdf.CellFormat(cellWidth, 4, line2, "", 1, "C", false, 0, "")
 			}
 		} else {
-			pdf.CellFormat(0, 4, address, "", 1, "C", false, 0, "")
+			pdf.CellFormat(cellWidth, 4, address, "", 1, "C", false, 0, "")
 		}
 	}
 
 	pdf.Ln(2)
 
-	// Document Type and Number
-	pdf.SetFont("Arial", "B", 9)
-	docTypeName := getDocumentTypeName(invoice.DocumentType)
-	pdf.CellFormat(0, 5, encodeText(docTypeName), "", 1, "C", false, 0, "")
-	pdf.CellFormat(0, 5, fmt.Sprintf("No. %d", invoice.Folio), "", 1, "C", false, 0, "")
-
-	pdf.SetFont("Arial", "", 8)
-	pdf.CellFormat(0, 4, fmt.Sprintf("Fecha: %s", invoice.IssueDate.Format("02/01/2006")), "", 1, "C", false, 0, "")
-
-	// Separator line
-	pdf.Ln(2)
-	pdf.CellFormat(0, 3, strings.Repeat("-", separatorWidth), "", 1, "C", false, 0, "")
-	pdf.Ln(2)
-
 	// Customer Information
 	if invoice.Receiver != nil {
-		pdf.SetFont("Arial", "B", 8)
-		pdf.CellFormat(0, 4, "CLIENTE:", "", 1, "L", false, 0, "")
+		pdf.SetFont("Arial", "", 8)
+		pdf.CellFormat(0, 4, "Cliente", "", 1, "L", false, 0, "")
 
 		pdf.SetFont("Arial", "", 7)
 		// Customer name with wrapping
@@ -319,9 +349,10 @@ func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampX
 		pdf.Ln(2)
 	}
 
-	// Items Header
+	pdf.Line(0, pdf.GetY(), 200, pdf.GetY())
 	pdf.SetFont("Arial", "B", 7)
-	pdf.CellFormat(0, 3, "DETALLE", "", 1, "L", false, 0, "")
+	pdf.CellFormat(100, 3, "Artículo", "", 1, "L", false, 0, "")
+	pdf.CellFormat(100, 3, "Artículo", "", 1, "L", false, 0, "")
 	pdf.Ln(1)
 
 	// Items
@@ -336,7 +367,7 @@ func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampX
 
 		// Quantity, unit price, and total on separate line
 		pdf.CellFormat(0, 3, fmt.Sprintf("%.0f x %s", item.Quantity, formatCurrency(item.UnitPrice)), "", 0, "L", false, 0, "")
-		pdf.CellFormat(0, 3, fmt.Sprintf("%s", formatCurrency(item.LineTotal)), "", 1, "R", false, 0, "")
+		pdf.CellFormat(0, 3, formatCurrency(item.LineTotal), "", 1, "R", false, 0, "")
 		pdf.Ln(1)
 	}
 
@@ -404,7 +435,7 @@ func (s *SimpleDocumentService) createThermalPDF(invoice *domain.Invoice, stampX
 	}
 
 	// Calculate image dimensions for thermal printer - make it prominent
-	pageWidth, _ := pdf.GetPageSize()
+	pageWidth, _ = pdf.GetPageSize()
 	margins := 6.0 // Margins for barcode
 	maxWidth := pageWidth - margins
 

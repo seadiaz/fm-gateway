@@ -36,6 +36,26 @@ func (m *mockCompanyService) FindByCode(ctx context.Context, code string) (*doma
 	return nil, &CompanyNotFoundError{Code: code}
 }
 
+func (m *mockCompanyService) GetCommercialActivities(ctx context.Context, companyID string) ([]domain.CommercialActivity, error) {
+	// Return empty activities for testing
+	return []domain.CommercialActivity{}, nil
+}
+
+func (m *mockCompanyService) AddCommercialActivity(ctx context.Context, companyID string, activity domain.CommercialActivity) error {
+	// Mock implementation
+	return nil
+}
+
+func (m *mockCompanyService) RemoveCommercialActivity(ctx context.Context, companyID string, activityCode string) error {
+	// Mock implementation
+	return nil
+}
+
+func (m *mockCompanyService) Update(ctx context.Context, company domain.Company) error {
+	// Mock implementation
+	return nil
+}
+
 // Mock StampService for testing
 type mockStampService struct{}
 

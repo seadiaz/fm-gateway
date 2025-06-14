@@ -56,7 +56,7 @@ func main() {
 	inprogressDir := getEnvOrDefault("FMG_PROCESSOR_INPROGRESS_DIR", "./tmp/inprogress")
 	destinationDir := getEnvOrDefault("FMG_PROCESSOR_DESTINATION_DIR", "./tmp/destination")
 	errorDir := getEnvOrDefault("FMG_PROCESSOR_ERROR_DIR", "./tmp/errors")
-	intervalStr := getEnvOrDefault("FMG_PROCESSOR_INTERVAL", "15s")
+	intervalStr := getEnvOrDefault("FMG_PROCESSOR_INTERVAL", "5s")
 
 	var fileWorker *async.FileIntegrationWorker
 	if sourceDir == "" || inprogressDir == "" || destinationDir == "" || errorDir == "" {

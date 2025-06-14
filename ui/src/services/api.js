@@ -104,14 +104,8 @@ const isBackendAvailable = async () => {
 export const companyService = {
     // Get all companies
     getCompanies: async () => {
-        try {
-            const response = await api.get('/companies');
-            return response.data;
-        } catch (error) {
-            console.warn('Using mock companies data');
-            await delay(500); // Simulate network delay
-            return MOCK_COMPANIES;
-        }
+        const response = await api.get('/companies');
+        return response.data;
     },
 
     // Get company by ID
@@ -152,6 +146,26 @@ export const companyService = {
             MOCK_COMPANIES.push(newCompany);
             return newCompany;
         }
+    },
+
+    // Get commercial activities for a company
+    getCommercialActivities: async (companyId) => {
+        const response = await api.get(`/companies/${companyId}/commercial-activities`);
+        return response.data;
+    },
+
+    // Add a commercial activity to a company
+    addCommercialActivity: async (companyId, activityData) => {
+        const response = await api.post(`/companies/${companyId}/commercial-activities`, {
+            code: activityData.code,
+            description: activityData.description
+        });
+        return response.data;
+    },
+
+    // Remove a commercial activity from a company
+    removeCommercialActivity: async (companyId, activityId) => {
+        await api.delete(`/companies/${companyId}/commercial-activities/${activityId}`);
     },
 };
 
