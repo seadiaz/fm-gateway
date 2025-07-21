@@ -2,11 +2,12 @@ name: Build and Push UI Docker Image
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
+    tags: [ 'v*' ]
     paths:
       - 'ui/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'ui/**'
   workflow_dispatch:
