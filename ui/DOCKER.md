@@ -4,17 +4,22 @@ This document describes how to build and run the UI application using Docker.
 
 ## Quick Start
 
-### Production Build
+### Standalone Production Build
 
 ```bash
 # Build the production image
 docker build -t fm-gateway-ui .
 
-# Run the production container
-docker run -p 8080:80 fm-gateway-ui
+# Run the production container (assumes backend running on localhost:3000)
+docker run -p 8080:3002 fm-gateway-ui
+
+# Or specify a different backend URL
+docker run -p 8080:3002 -e REACT_APP_BACKEND_URL=http://your-backend:3000 fm-gateway-ui
 ```
 
 The UI will be available at `http://localhost:8080`
+
+**Note**: The container will proxy API calls to the backend specified by `REACT_APP_BACKEND_URL` (defaults to `http://localhost:3000`).
 
 ### Development Build
 
@@ -30,28 +35,35 @@ The development server will be available at `http://localhost:3002` with hot rel
 
 ## Using Docker Compose
 
-### Production
+### Full Stack (Recommended for Production)
 ```bash
-docker-compose up ui
+# From the project root directory
+docker-compose up
 ```
 
-### Development
+This will start:
+- Backend API on port 3000
+- Frontend UI on port 8080  
+- PostgreSQL database on port 5432
+
+The UI will automatically proxy API calls to the backend service.
+
+### UI Only (Development)
 ```bash
+# From the ui/ directory
 docker-compose up ui-dev
 ```
 
 ## Image Details
 
 ### Production Image
-- **Base**: `nginx:alpine`
-- **Port**: 80
+- **Base**: `node:18-alpine`
+- **Port**: 3002
 - **Features**:
-  - Multi-stage build for optimized size
-  - Nginx with optimized configuration
-  - Gzip compression
-  - Security headers
-  - React Router support
-  - Static asset caching
+  - Node.js development server in production mode
+  - Built-in proxy support to backend API
+  - Hot module replacement disabled in production
+  - Environment-based backend URL configuration
 
 ### Development Image
 - **Base**: `node:18-alpine`
@@ -60,14 +72,17 @@ docker-compose up ui-dev
   - Hot reloading
   - Volume mounting for live code changes
   - Development server with React Scripts
+  - Automatic proxy to backend API
 
 ## Environment Variables
 
 ### Production
 - `NODE_ENV=production`
+- `REACT_APP_BACKEND_URL` - Backend API URL (default: `http://localhost:3000`)
 
 ### Development
 - `NODE_ENV=development`
+- `REACT_APP_BACKEND_URL` - Backend API URL (default: `http://localhost:3000`)
 - `CHOKIDAR_USEPOLLING=true` (for Docker volume mounting)
 
 ## GitHub Actions

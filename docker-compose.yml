@@ -21,6 +21,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: fm-gateway-ui
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_BACKEND_URL=http://api:3000
+    ports:
+      - "8080:3002"
+    depends_on:
+      - api
+    restart: unless-stopped
+
   postgres:
     image: postgres:15
     container_name: fm-gateway-postgres

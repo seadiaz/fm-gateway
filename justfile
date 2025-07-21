@@ -2,7 +2,7 @@ build:
     go build -o bin/api ./cmd/api
 
 run: build
-    source .envrc.local && ./bin/api
+    ./bin/api
 
 test:
     go test ./...

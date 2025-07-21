@@ -16,10 +16,17 @@ const CompanySelector = ({ selectedCompany, onCompanySelect, onCreateCompany }) 
     try {
       setLoading(true);
       const companiesData = await companyService.getCompanies();
-      setCompanies(companiesData);
+      // Ensure we always have an array
+      if (Array.isArray(companiesData)) {
+        setCompanies(companiesData);
+      } else {
+        console.warn('Companies data is not an array:', companiesData);
+        setCompanies([]);
+      }
     } catch (err) {
       setError('Error al cargar empresas');
       console.error('Error loading companies:', err);
+      setCompanies([]); // Ensure we have an empty array on error
     } finally {
       setLoading(false);
     }
@@ -49,7 +56,7 @@ const CompanySelector = ({ selectedCompany, onCompanySelect, onCreateCompany }) 
         <div className="flex items-center space-x-3">
           <Building2 className="w-5 h-5 text-error-500" />
           <p className="text-error-700">{error}</p>
-          <button 
+          <button
             onClick={loadCompanies}
             className="btn-secondary text-sm"
           >

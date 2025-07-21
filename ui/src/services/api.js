@@ -104,8 +104,21 @@ const isBackendAvailable = async () => {
 export const companyService = {
     // Get all companies
     getCompanies: async () => {
-        const response = await api.get('/companies');
-        return response.data;
+        try {
+            const response = await api.get('/companies');
+            // Ensure we always return an array
+            const data = response.data;
+            if (Array.isArray(data)) {
+                return data;
+            } else {
+                console.warn('Backend returned non-array data for companies:', data);
+                return [];
+            }
+        } catch (error) {
+            console.warn('Failed to fetch companies from backend, using mock data');
+            await delay(300);
+            return MOCK_COMPANIES;
+        }
     },
 
     // Get company by ID
