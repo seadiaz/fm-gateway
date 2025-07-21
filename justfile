@@ -23,4 +23,9 @@ db-logs:
     docker-compose logs -f postgres
 
 help:
-    @just --list 
+    @just --list
+
+release version:
+    #!/bin/bash
+    git tag {{version}}
+    git push --tags
