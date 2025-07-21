@@ -1,13 +1,33 @@
-version: "3.8"
-
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fm-gateway-api
+    environment:
+      - FMG_DBHOST=postgres
+      - FMG_DBUSER=fmgateway
+      - FMG_DBPASS=${POSTGRES_PASSWORD}
+      - FMG_PROCESSOR_SOURCE_DIR=/app/tmp/source
+      - FMG_PROCESSOR_INPROGRESS_DIR=/app/tmp/inprogress
+      - FMG_PROCESSOR_DESTINATION_DIR=/app/tmp/destination
+      - FMG_PROCESSOR_ERROR_DIR=/app/tmp/errors
+    ports:
+      - "3000:3000"
+    volumes:
+      - api_data:/app/tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   postgres:
     image: postgres:15
     container_name: fm-gateway-postgres
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: fmgateway
-      POSTGRES_PASSWORD: fmgateway123 # pragma: allowlist secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -21,3 +41,4 @@ services:
 
 volumes:
   postgres_data:
+  api_data:
